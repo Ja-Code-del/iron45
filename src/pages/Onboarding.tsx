@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { useProfile } from '../hooks/useProfile';
+import { useDisplayName } from '../hooks/useDisplayName.ts';
 import type { Objective, Level, Constraint, Profile } from '../types';
 
 interface Option<T extends string> {
@@ -9,6 +10,7 @@ interface Option<T extends string> {
   label: string;
   desc: string;
 }
+const displayName = useDisplayName();
 
 const OBJECTIVES: Option<Objective>[] = [
   { value: 'muscle',    label: 'Gagner du muscle', desc: 'Hypertrophie, volume, définition.' },
@@ -76,11 +78,13 @@ export function Onboarding() {
       <Navbar meta="Configuration" />
       <section className="onboarding">
         <div className="onboarding-inner">
-          <div className="onb-tag">Configuration du programme</div>
-          <h2 className="onb-title">
-            Trouve<br />
-            ton <span className="italic">plan</span>.
-          </h2>
+            <div className="onb-tag">
+                {displayName ? `Bienvenue, ${displayName}` : 'Configuration du programme'}
+            </div>
+            <h2 className="onb-title">
+                Trouve<br />
+                ton <span className="italic">plan</span>.
+            </h2>
           <p className="onb-sub">
             Trois questions pour adapter le programme à ton objectif, ton niveau, et tes contraintes.{' '}
             <em>Quarante-cinq secondes, et tu commences demain matin.</em>
