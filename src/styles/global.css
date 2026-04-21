@@ -1063,3 +1063,10 @@ footer.manifesto {
   border-radius: 2px;
   line-height: 1.5;
 }
+.auth-hint {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
 
 type Mode = 'signin' | 'signup';
 
@@ -13,6 +14,7 @@ export function Auth() {
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [ironName, setIronName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
@@ -23,9 +25,23 @@ export function Auth() {
     setSubmitting(true);
 
     if (mode === 'signup') {
-      const { error } = await signUp(email, password);
+      const trimmedName = ironName.trim();
+      if (trimmedName.length < 2) {
+        setError('Ton Iron Name doit faire au moins 2 caractères.');
+        setSubmitting(false);
+        return;
+      }
+
+      const { error } = await signUp(email, password, trimmedName);
       if (error) {
         setError(error);
+        setSubmitting(false);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/');
       } else {
         setSignupSuccess(true);
       }
@@ -95,6 +111,27 @@ export function Auth() {
           </p>
 
           <form className="auth-form" onSubmit={handleSubmit}>
+            {mode === 'signup' && (
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="iron-name">Iron Name</label>
+                <input
+                  id="iron-name"
+                  type="text"
+                  className="auth-input"
+                  value={ironName}
+                  onChange={(e) => setIronName(e.target.value)}
+                  placeholder="Le nom sous lequel le coach s'adressera à toi"
+                  required
+                  minLength={2}
+                  maxLength={30}
+                  autoComplete="nickname"
+                />
+                <div className="auth-hint">
+                  Ton alias de guerrier. Il apparaîtra dans l'app.
+                </div>
+              </div>
+            )}
+
             <div className="auth-field">
               <label className="auth-label" htmlFor="email">Email</label>
               <input
