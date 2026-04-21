@@ -16,13 +16,11 @@ export function useAuth(): UseAuthReturn {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Récupérer la session au chargement
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
 
-    // Écouter les changements de session (login, logout, refresh token)
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
