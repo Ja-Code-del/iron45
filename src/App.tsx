@@ -1,18 +1,34 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Onboarding } from './pages/Onboarding';
 import { Program } from './pages/Program';
+import { Auth } from './pages/Auth';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { useTheme } from './hooks/useTheme';
 import './styles/global.css';
 
 function App() {
-  // Initialise le thème au démarrage de l'app
   useTheme();
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Onboarding />} />
-        <Route path="/program" element={<Program />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/program"
+          element={
+            <ProtectedRoute>
+              <Program />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
