@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDisplayName } from '../hooks/useDisplayName';
 import { Navbar } from '../components/Navbar';
 import { useProfile } from '../hooks/useProfile';
-import { useDisplayName } from '../hooks/useDisplayName';
 import type { Objective, Level, Constraint, Profile } from '../types';
 
 interface Option<T extends string> {
