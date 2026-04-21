@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
+import { useAuth } from '../hooks/useAuth';
 
 interface NavbarProps {
   meta?: string;
@@ -8,6 +9,14 @@ interface NavbarProps {
 }
 
 export function Navbar({ meta = 'Programme adaptatif', showReset = false, onReset }: NavbarProps) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate('/auth');
+  }
+
   return (
     <nav className="top">
       <Link to="/" className="logo" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -19,6 +28,11 @@ export function Navbar({ meta = 'Programme adaptatif', showReset = false, onRese
         {showReset && (
           <button className="reset-btn" onClick={onReset}>
             Changer d'objectif
+          </button>
+        )}
+        {user && (
+          <button className="reset-btn" onClick={handleSignOut}>
+            Déconnexion
           </button>
         )}
         <ThemeToggle />
