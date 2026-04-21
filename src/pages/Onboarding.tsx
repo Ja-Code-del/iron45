@@ -10,7 +10,6 @@ interface Option<T extends string> {
   label: string;
   desc: string;
 }
-const displayName = useDisplayName();
 
 const OBJECTIVES: Option<Objective>[] = [
   { value: 'muscle',    label: 'Gagner du muscle', desc: 'Hypertrophie, volume, définition.' },
@@ -34,6 +33,7 @@ const CONSTRAINTS: Option<Constraint>[] = [
 export function Onboarding() {
   const navigate = useNavigate();
   const { saveProfile } = useProfile();
+  const displayName = useDisplayName();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [objective, setObjective] = useState<Objective | null>(null);
