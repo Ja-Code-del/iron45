@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { Modal } from '../components/Modal';
 import { Tabs } from '../components/Tabs';
@@ -34,7 +34,51 @@ export function Program() {
   const { profile, isComplete, loading, resetProfile } = useProfile();
   const [modalExercise, setModalExercise] = useState<Exercise | null>(null);
 
-  // Affiche un écran de chargement pendant qu'on récupère le profil depuis Supabase
+  const hasProfile = Boolean(
+    isComplete && profile.objective && profile.level
+  );
+
+  const conf = useMemo(() => {
+    if (!hasProfile || !profile.objective) return null;
+    return PROFILE_CONFIG[profile.objective];
+  }, [hasProfile, profile.objective]);
+
+  const objLabel = useMemo(() => {
+    if (!hasProfile || !profile.objective) return '';
+    return OBJECTIVE_LABELS[profile.objective];
+  }, [hasProfile, profile.objective]);
+
+  const levelLabel = useMemo(() => {
+    if (!hasProfile || !profile.level) return '';
+    return LEVEL_LABELS[profile.level];
+  }, [hasProfile, profile.level]);
+
+  const phases = useMemo(() => {
+    if (!hasProfile || !conf || !profile.level) {
+      return { p1: [], p2: [] };
+    }
+
+    return {
+      p1: PHASE_BUILDERS[conf.phases[0]](profile.level, profile.constraints),
+      p2: PHASE_BUILDERS[conf.phases[1]](profile.level, profile.constraints),
+    };
+  }, [hasProfile, conf, profile.level, profile.constraints]);
+
+  const schedule = useMemo(() => {
+    if (!hasProfile || !profile.objective) return [];
+    return buildSchedule(profile.objective);
+  }, [hasProfile, profile.objective]);
+
+  const principles = useMemo(() => {
+    if (!hasProfile || !profile.objective) return [];
+    return buildPrinciples(profile.objective);
+  }, [hasProfile, profile.objective]);
+
+  async function handleReset() {
+    await resetProfile();
+    navigate('/');
+  }
+
   if (loading) {
     return (
       <div className="shell">
@@ -48,31 +92,8 @@ export function Program() {
     );
   }
 
-  // Redirect si pas de profil
-  if (!isComplete || !profile.objective || !profile.level) {
-    navigate('/');
-    return null;
-  }
-
-  const conf = PROFILE_CONFIG[profile.objective];
-  const objLabel = OBJECTIVE_LABELS[profile.objective];
-  const levelLabel = LEVEL_LABELS[profile.level];
-
-  // Génération des phases (memoïsée pour éviter de reconstruire à chaque render)
-  const { p1, p2 } = useMemo(
-    () => ({
-      p1: PHASE_BUILDERS[conf.phases[0]](profile.level!, profile.constraints),
-      p2: PHASE_BUILDERS[conf.phases[1]](profile.level!, profile.constraints),
-    }),
-    [conf.phases, profile.level, profile.constraints]
-  );
-
-  const schedule = useMemo(() => buildSchedule(profile.objective!), [profile.objective]);
-  const principles = useMemo(() => buildPrinciples(profile.objective!), [profile.objective]);
-
-  async function handleReset() {
-  await resetProfile();
-  navigate('/');
+  if (!hasProfile || !conf) {
+    return <Navigate to="/" replace />;
   }
 
   const pills = [
@@ -96,7 +117,7 @@ export function Program() {
             </div>
           </div>
           <div className="days">
-            {p1.map((day) => (
+            {phases.p1.map((day) => (
               <DayCard key={day.letter} day={day} onExerciseClick={setModalExercise} />
             ))}
           </div>
@@ -117,7 +138,7 @@ export function Program() {
             </div>
           </div>
           <div className="days">
-            {p2.map((day) => (
+            {phases.p2.map((day) => (
               <DayCard key={day.letter} day={day} onExerciseClick={setModalExercise} />
             ))}
           </div>
@@ -139,6 +160,7 @@ export function Program() {
               </div>
             ))}
           </div>
+
           <div className="timeline-wrap">
             <h3>Anatomie des 45 minutes</h3>
             <div className="timeline">
@@ -188,6 +210,7 @@ export function Program() {
           <span>Programme personnalisé</span>
           <span className="hero-tag-pill">{objLabel} · {levelLabel}</span>
         </div>
+
         <h1 dangerouslySetInnerHTML={{ __html: conf.hero_title }} />
         <p className="hero-sub" dangerouslySetInnerHTML={{ __html: conf.hero_sub }} />
 
