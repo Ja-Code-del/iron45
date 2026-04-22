@@ -1486,3 +1486,192 @@ footer.manifesto {
 .session-complete-actions button {
   flex: 1;
 }
+
+/* ================================================
+   CELEBRATION — Moments de satisfaction
+   ================================================ */
+
+.celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg) 90%, #000);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: celebrationFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes celebrationFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.celebration-content {
+  position: relative;
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+}
+
+.celebration-main {
+  position: relative;
+  z-index: 2;
+  animation: celebrationRise 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes celebrationRise {
+  from { opacity: 0; transform: translateY(40px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.celebration-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--amber);
+  letter-spacing: 0.35em;
+  margin-bottom: 32px;
+  animation: celebrationFlicker 2s ease-in-out infinite;
+}
+
+.celebration-week .celebration-type,
+.celebration-phase .celebration-type {
+  color: var(--acid);
+}
+
+.celebration-program .celebration-type {
+  color: var(--fire);
+}
+
+@keyframes celebrationFlicker {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.65; }
+}
+
+.celebration-title {
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: clamp(52px, 11vw, 128px);
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  color: var(--ink);
+}
+
+.celebration-day    .celebration-title { color: var(--fire); }
+.celebration-week   .celebration-title { color: var(--acid); }
+.celebration-phase  .celebration-title { color: var(--acid); }
+.celebration-program .celebration-title { color: var(--fire); }
+
+.celebration-subtitle {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: clamp(20px, 3vw, 28px);
+  line-height: 1.3;
+  color: var(--ink-2);
+  margin-bottom: 20px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.celebration-detail {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+
+.celebration-btn {
+  background: var(--fire);
+  color: #fff;
+  border: none;
+  padding: 20px 48px;
+  font-family: 'Anton', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.25s;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+:root[data-theme="light"] .celebration-btn { color: var(--bg); }
+.celebration-btn:hover {
+  background: var(--fire-deep);
+  transform: translateY(-2px);
+}
+
+/* === Particules === */
+.celebration-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: particleBurst 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.particle-0 { background: var(--fire); }
+.particle-1 { background: var(--amber); }
+.particle-2 { background: var(--acid); }
+.particle-3 { background: var(--bone); }
+
+@keyframes particleBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(
+      calc(-50% + (var(--particle-x, cos(var(--a)) * 300px))),
+      calc(-50% + (var(--particle-y, sin(var(--a)) * 300px)))
+    ) scale(1.5);
+  }
+}
+
+/* Répartition angulaire des particules */
+.particle-0  { --a: 0deg;   }
+.particle-1  { --a: 30deg;  }
+.particle-2  { --a: 60deg;  }
+.particle-3  { --a: 90deg;  }
+.particle:nth-child(5)  { --a: 120deg; }
+.particle:nth-child(6)  { --a: 150deg; }
+.particle:nth-child(7)  { --a: 180deg; }
+.particle:nth-child(8)  { --a: 210deg; }
+.particle:nth-child(9)  { --a: 240deg; }
+.particle:nth-child(10) { --a: 270deg; }
+.particle:nth-child(11) { --a: 300deg; }
+.particle:nth-child(12) { --a: 330deg; }
+
+/* Fallback pour navigateurs sans trig functions (rare aujourd'hui) */
+@supports not (transform: translate(calc(cos(0deg) * 1px), calc(sin(0deg) * 1px))) {
+  .particle {
+    animation: particleFallback 1.5s ease-out forwards;
+  }
+  @keyframes particleFallback {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -200%) scale(2); }
+  }
+}
