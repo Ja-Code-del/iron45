@@ -7,6 +7,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { AuthCallback } from './pages/AuthCallback';
 import { Welcome } from './pages/Welcome';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
 import { useTheme } from './hooks/useTheme';
 import { Analytics } from "@vercel/analytics/react"
 import './styles/global.css';
@@ -21,6 +23,8 @@ function App() {
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/"
               element={

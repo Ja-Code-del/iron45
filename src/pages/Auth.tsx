@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -220,6 +220,23 @@ function handleAppleComingSoon() {
                 ? 'Patiente...'
                 : mode === 'signin' ? 'Se connecter →' : 'Créer mon compte →'}
             </button>
+
+            {mode === 'signin' && (
+              <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <Link
+                  to="/forgot-password"
+                  style={{
+                    color: 'var(--ink-2)',
+                    fontSize: '13px',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '3px',
+                  }}
+                >
+                  Mot de passe oublié ?
+                </Link>
+              </div>
+)}
           </form>
 
           <div className="auth-switch">
