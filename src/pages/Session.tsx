@@ -6,6 +6,9 @@ import { Modal } from '../components/Modal';
 import { ExerciseCheckbox } from '../components/ExerciseCheckbox';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
+import { Celebration, type CelebrationType } from '../components/Celebration';
+import { listSessionsForProgram } from '../features/program/sessionService';
+import { computeProgress } from '../features/program/progressHelpers';
 import {
   getSessionWithLogs,
   toggleExerciseCompletion,
@@ -16,9 +19,7 @@ import {
 import { EXERCISES } from '../data/exercises';
 import { ICONS } from '../data/icons';
 import type { Exercise } from '../types';
-import type { Database } from '../types/database';
 
-type ExerciseLog = Database['public']['Tables']['exercise_logs']['Row'];
 type Feeling = 'easy' | 'medium' | 'hard' | 'exhausting';
 
 const FEELING_LABELS: Record<Feeling, { label: string; emoji: string }> = {
@@ -44,6 +45,13 @@ export function Session() {
   const [selectedFeeling, setSelectedFeeling] = useState<Feeling | null>(null);
   const [notes, setNotes] = useState('');
   const [submittingComplete, setSubmittingComplete] = useState(false);
+
+  const [celebration, setCelebration] = useState<{
+  type: CelebrationType;
+  title: string;
+  subtitle: string;
+  detail?: string;
+  } | null>(null);
 
   /* ===================================================================
    * CHARGEMENT INITIAL
@@ -104,28 +112,84 @@ export function Session() {
    * =================================================================== */
 
   async function handleCompleteSession(e: FormEvent) {
-    e.preventDefault();
-    if (!sessionData || submittingComplete) return;
+  e.preventDefault();
+  if (!sessionData || submittingComplete) return;
 
-    setSubmittingComplete(true);
+  setSubmittingComplete(true);
 
-    const startedAt = new Date(sessionData.started_at).getTime();
-    const durationSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+  const startedAt = new Date(sessionData.started_at).getTime();
+  const durationSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
 
-    const success = await completeSession({
-      sessionId: sessionData.id,
-      durationSeconds,
-      feeling: selectedFeeling ?? undefined,
-      notes: notes.trim() || undefined,
-    });
+  const success = await completeSession({
+    sessionId: sessionData.id,
+    durationSeconds,
+    feeling: selectedFeeling ?? undefined,
+    notes: notes.trim() || undefined,
+  });
 
-    if (success) {
-      navigate('/program');
-    } else {
-      alert("Impossible d'enregistrer la séance. Réessaie.");
-      setSubmittingComplete(false);
-    }
+  if (!success) {
+    alert("Impossible d'enregistrer la séance. Réessaie.");
+    setSubmittingComplete(false);
+    return;
   }
+
+  // ============================================================
+  // DÉTECTION DES PALIERS ATTEINTS
+  // ============================================================
+  // On refetch toutes les sessions pour avoir l'état à jour, puis on calcule
+  const updatedSessions = await listSessionsForProgram(sessionData.program_id);
+  const progress = computeProgress(updatedSessions);
+
+  const completedWeek = progress.weeks.find((w) => w.weekNumber === sessionData.week_number);
+  const justCompletedWeek = completedWeek?.isComplete ?? false;
+
+  // On ferme la modal de fin
+  setShowCompleteForm(false);
+
+  // Logique de priorité : programme > phase > semaine > jour
+  if (progress.isProgramComplete) {
+    setCelebration({
+      type: 'program',
+      title: 'Mission accomplie',
+      subtitle: '8 semaines. 48 séances. Tu as tout donné.',
+      detail: 'PROGRAMME IRON 45 — TERMINÉ',
+    });
+  } else if (justCompletedWeek && sessionData.week_number === 4) {
+    setCelebration({
+      type: 'phase',
+      title: 'Phase 1 bouclée',
+      subtitle: 'La fondation est posée. Place à l\'intensité.',
+      detail: 'PHASE 1 · FONDATION — TERMINÉE',
+    });
+  } else if (justCompletedWeek && sessionData.week_number === 8) {
+    // Ce cas est couvert par isProgramComplete ci-dessus, mais on le garde par sécurité
+    setCelebration({
+      type: 'phase',
+      title: 'Phase 2 bouclée',
+      subtitle: 'Tu as tenu l\'intensité jusqu\'au bout.',
+      detail: 'PHASE 2 · INTENSITÉ — TERMINÉE',
+    });
+  } else if (justCompletedWeek) {
+    setCelebration({
+      type: 'week',
+      title: `Semaine ${sessionData.week_number}`,
+      subtitle: `Trois jours. Bouclés. Tu passes en semaine ${sessionData.week_number + 1}.`,
+      detail: `${progress.globalPercent}% DU PROGRAMME COMPLÉTÉ`,
+    });
+  } else {
+    setCelebration({
+      type: 'day',
+      title: `Jour ${sessionData.day_letter}`,
+      subtitle: 'Séance terminée. Une de plus dans la machine.',
+      detail: `${progress.globalPercent}% DU PROGRAMME COMPLÉTÉ`,
+    });
+  }
+}
+
+function dismissCelebration() {
+  setCelebration(null);
+  navigate('/program');
+}
 
   /* ===================================================================
    * ABANDONNER LA SÉANCE
@@ -319,7 +383,16 @@ export function Session() {
           </div>
         </div>
       )}
-
+        {/* ============== CELEBRATION ============== */}
+        {celebration && (
+            <Celebration
+                type={celebration.type}
+                title={celebration.title}
+                subtitle={celebration.subtitle}
+                detail={celebration.detail}
+                onDismiss={dismissCelebration}
+            />
+)}
       <Modal exercise={modalExercise} onClose={() => setModalExercise(null)} />
     </div>
   );
