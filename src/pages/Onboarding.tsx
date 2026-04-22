@@ -35,7 +35,7 @@ export function Onboarding() {
   const navigate = useNavigate();
   const { saveProfile, isComplete, loading } = useProfile();
   const { user } = useAuth();
-  const displayName = useDisplayName();
+  const { displayName } = useDisplayName();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [objective, setObjective] = useState<Objective | null>(null);

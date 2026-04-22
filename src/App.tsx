@@ -5,6 +5,8 @@ import { Auth } from './pages/Auth';
 import { Session } from './pages/Session';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import { AuthCallback } from './pages/AuthCallback';
+import { Welcome } from './pages/Welcome';
 import { useTheme } from './hooks/useTheme';
 import { Analytics } from "@vercel/analytics/react"
 import './styles/global.css';
@@ -18,6 +20,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/"
               element={
@@ -39,6 +42,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Session />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/welcome"
+              element={
+                <ProtectedRoute>
+                  <Welcome />
                 </ProtectedRoute>
               }
             />
