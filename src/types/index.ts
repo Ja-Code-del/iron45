@@ -10,6 +10,7 @@ export interface Profile {
 }
 
 export interface Exercise {
+  key: string;
   name: string;
   muscle: string;
   icon: string;
