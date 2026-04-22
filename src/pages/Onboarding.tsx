@@ -60,12 +60,16 @@ export function Onboarding() {
     if (step > 1) setStep((step - 1) as 1 | 2 | 3);
   }
 
-  function finish() {
+  async function finish() {
     if (!objective || !level) return;
     const finalConstraints = constraints.length === 0 ? (['none'] as Constraint[]) : constraints;
     const profile: Profile = { objective, level, constraints: finalConstraints };
-    saveProfile(profile);
-    navigate('/program');
+    const success = await saveProfile(profile);
+    if (success) {
+      navigate('/program');
+    } else {
+      alert("Une erreur est survenue lors de l'enregistrement. Réessaie dans quelques instants.");
+    }
   }
 
   const canAdvance =

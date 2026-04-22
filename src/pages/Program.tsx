@@ -31,8 +31,22 @@ const CONSTRAINT_LABELS: Record<string, string> = {
 
 export function Program() {
   const navigate = useNavigate();
-  const { profile, isComplete, resetProfile } = useProfile();
+  const { profile, isComplete, loading, resetProfile } = useProfile();
   const [modalExercise, setModalExercise] = useState<Exercise | null>(null);
+
+  // Affiche un écran de chargement pendant qu'on récupère le profil depuis Supabase
+  if (loading) {
+    return (
+      <div className="shell">
+        <Navbar />
+        <section className="onboarding">
+          <div className="onboarding-inner">
+            <div className="onb-tag">Chargement de ton programme...</div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   // Redirect si pas de profil
   if (!isComplete || !profile.objective || !profile.level) {
@@ -56,9 +70,9 @@ export function Program() {
   const schedule = useMemo(() => buildSchedule(profile.objective!), [profile.objective]);
   const principles = useMemo(() => buildPrinciples(profile.objective!), [profile.objective]);
 
-  function handleReset() {
-    resetProfile();
-    navigate('/');
+  async function handleReset() {
+  await resetProfile();
+  navigate('/');
   }
 
   const pills = [
