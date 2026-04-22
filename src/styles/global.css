@@ -1675,3 +1675,25 @@ footer.manifesto {
     100% { opacity: 0; transform: translate(-50%, -200%) scale(2); }
   }
 }
+
+.auth-oauth-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.auth-oauth-google:hover:not(:disabled) {
+  border-color: var(--fire);
+  color: var(--fire);
+}
+
+.auth-oauth-apple {
+  opacity: 0.5;
+  cursor: not-allowed;
+  position: relative;
+}
+.auth-oauth-apple:hover {
+  border-color: var(--line) !important;
+  transform: none !important;
+}
