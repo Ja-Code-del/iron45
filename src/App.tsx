@@ -6,47 +6,48 @@ import { Session } from './pages/Session';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { useTheme } from './hooks/useTheme';
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 import './styles/global.css';
 
 function App() {
   useTheme();
 
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Onboarding />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/program"
-            element={
-              <ProtectedRoute>
-                <Program />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/session/:id"
-            element={
-              <ProtectedRoute>
-                <Session />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
-
+    <>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/program"
+              element={
+                <ProtectedRoute>
+                  <Program />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/session/:id"
+              element={
+                <ProtectedRoute>
+                  <Session />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+      <Analytics />
+    </>
   );
-  <Analytics />
 }
 
 export default App;
