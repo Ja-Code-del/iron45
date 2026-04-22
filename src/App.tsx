@@ -6,6 +6,7 @@ import { Session } from './pages/Session';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { useTheme } from './hooks/useTheme';
+import { Analytics } from "@vercel/analytics/next"
 import './styles/global.css';
 
 function App() {
@@ -43,7 +44,9 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+
   );
+  <Analytics />
 }
 
 export default App;
