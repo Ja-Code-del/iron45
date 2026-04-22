@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { useDisplayName } from '../hooks/useDisplayName';
 import { Navbar } from '../components/Navbar';
 import { useProfile } from '../hooks/useProfile';
+import { useAuth } from '../context/AuthContext';
 import type { Objective, Level, Constraint, Profile } from '../types';
 
 interface Option<T extends string> {
@@ -33,12 +34,16 @@ const CONSTRAINTS: Option<Constraint>[] = [
 export function Onboarding() {
   const navigate = useNavigate();
   const { saveProfile, isComplete, loading } = useProfile();
+  const { user } = useAuth();
   const displayName = useDisplayName();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [objective, setObjective] = useState<Objective | null>(null);
   const [level, setLevel] = useState<Level | null>(null);
   const [constraints, setConstraints] = useState<Constraint[]>([]);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function toggleConstraint(value: Constraint) {
     if (value === 'none') {
@@ -61,14 +66,31 @@ export function Onboarding() {
   }
 
   async function finish() {
+    // Garde 1 : guard contre les re-clics pendant une requête en cours
+    if (submitting) return;
+
+    // Garde 2 : données minimales requises
     if (!objective || !level) return;
+
+    // Garde 3 : session valide requise
+    if (!user) {
+      setSubmitError("Ta session a expiré. Reconnecte-toi pour continuer.");
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+
     const finalConstraints = constraints.length === 0 ? (['none'] as Constraint[]) : constraints;
     const profile: Profile = { objective, level, constraints: finalConstraints };
+
     const success = await saveProfile(profile);
+
     if (success) {
       navigate('/program');
     } else {
-      alert("Une erreur est survenue lors de l'enregistrement. Réessaie dans quelques instants.");
+      setSubmitError("Impossible d'enregistrer ton programme. Vérifie ta connexion et réessaie.");
+      setSubmitting(false);
     }
   }
 
@@ -203,12 +225,21 @@ export function Onboarding() {
                   </button>
                 ))}
               </div>
+                {submitError && (
+                  <div className="auth-error" style={{ marginBottom: '16px' }}>
+                    {submitError}
+                  </div>
+                )}
               <div className="onb-nav">
-                <button className="onb-btn onb-btn-back" onClick={prev}>
+                <button className="onb-btn onb-btn-back" onClick={prev} disabled={submitting}>
                   ← Retour
                 </button>
-                <button className="onb-btn" onClick={finish}>
-                  Générer mon plan →
+                <button
+                  className="onb-btn"
+                  onClick={finish}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Enregistrement...' : 'Générer mon plan →'}
                 </button>
               </div>
             </div>
