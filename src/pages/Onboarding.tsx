@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useDisplayName } from '../hooks/useDisplayName';
 import { Navbar } from '../components/Navbar';
 import { useProfile } from '../hooks/useProfile';
@@ -32,7 +32,7 @@ const CONSTRAINTS: Option<Constraint>[] = [
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const { saveProfile } = useProfile();
+  const { saveProfile, isComplete, loading } = useProfile();
   const displayName = useDisplayName();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -76,6 +76,25 @@ export function Onboarding() {
     (step === 1 && !!objective) ||
     (step === 2 && !!level) ||
     step === 3;
+
+    // Pendant qu'on vérifie en DB si un programme existe déjà
+  if (loading) {
+    return (
+      <div className="shell">
+        <Navbar meta="Configuration" />
+        <section className="onboarding">
+          <div className="onboarding-inner">
+            <div className="onb-tag">Vérification de ton profil...</div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // Un programme actif existe déjà → on redirige vers /program
+  if (isComplete) {
+    return <Navigate to="/program" replace />;
+  }
 
   return (
     <div className="shell">
