@@ -1070,3 +1070,75 @@ footer.manifesto {
   color: var(--ink-3);
   margin-top: 2px;
 }
+
+/* ================================================
+   DAY CARD — Progression
+   ================================================ */
+.day-status-bar {
+  padding: 10px 26px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+}
+.day-status-in_progress {
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  color: var(--amber);
+}
+.day-status-completed {
+  background: color-mix(in srgb, var(--acid) 12%, transparent);
+  color: var(--acid);
+}
+.day-status-locked {
+  background: var(--bg-3);
+  color: var(--ink-3);
+}
+
+.day-locked {
+  opacity: 0.55;
+  pointer-events: none;
+}
+.day-locked:hover {
+  transform: none;
+  border-color: var(--line);
+}
+.day-locked .exercise {
+  cursor: default;
+}
+
+.day-completed {
+  border-color: color-mix(in srgb, var(--acid) 40%, var(--line));
+}
+
+.day-tip {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.day-start-btn {
+  width: 100%;
+  background: var(--fire);
+  color: #fff;
+  border: none;
+  padding: 14px 20px;
+  font-family: 'Anton', sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+:root[data-theme="light"] .day-start-btn { color: var(--bg); }
+.day-start-btn:hover:not(:disabled) {
+  background: var(--fire-deep);
+  transform: translateX(2px);
+}
+.day-start-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}

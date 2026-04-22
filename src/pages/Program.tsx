@@ -3,12 +3,17 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { Modal } from '../components/Modal';
 import { Tabs } from '../components/Tabs';
-import { DayCard } from '../components/DayCard';
+import { DayCard, type DayProgressStatus } from '../components/DayCard';
 import { useProfile } from '../hooks/useProfile';
+import { useSessions } from '../hooks/useSessions';
 import { PROFILE_CONFIG, buildPrinciples } from '../features/program/profileConfig';
 import { PHASE_BUILDERS } from '../features/program/builders';
 import { buildSchedule } from '../features/program/schedules';
-import type { Exercise, Objective, Level } from '../types';
+import { useAuth } from '../context/AuthContext';
+import type { Exercise, Objective, Level, Day } from '../types';
+import type { Database } from '../types/database';
+
+type ProgramRow = Database['public']['Tables']['programs']['Row'];
 
 const OBJECTIVE_LABELS: Record<Objective, string> = {
   muscle: 'MUSCLE',
@@ -31,12 +36,28 @@ const CONSTRAINT_LABELS: Record<string, string> = {
 
 export function Program() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { profile, isComplete, loading, resetProfile } = useProfile();
   const [modalExercise, setModalExercise] = useState<Exercise | null>(null);
+  const [activeProgramId, setActiveProgramId] = useState<string | null>(null);
 
-  const hasProfile = Boolean(
-    isComplete && profile.objective && profile.level
-  );
+  // On récupère l'ID du programme actif au montage (nécessaire pour useSessions)
+  // Note : on pourrait l'ajouter à useProfile pour éviter ce double-fetch,
+  // mais pour rester incrémental on le fait ici.
+  useMemo(() => {
+    if (!user || !isComplete) return;
+    // On lit directement depuis supabase le programme actif
+    import('../features/program/programService').then(({ getActiveProgram }) => {
+      getActiveProgram(user.id).then((p: ProgramRow | null) => {
+        if (p) setActiveProgramId(p.id);
+      });
+    });
+  }, [user, isComplete]);
+
+  const sessionsHook = useSessions({ programId: activeProgramId });
+  const { progress, inProgressSession, startSession } = sessionsHook;
+
+  const hasProfile = Boolean(isComplete && profile.objective && profile.level);
 
   const conf = useMemo(() => {
     if (!hasProfile || !profile.objective) return null;
@@ -57,7 +78,6 @@ export function Program() {
     if (!hasProfile || !conf || !profile.level) {
       return { p1: [], p2: [] };
     }
-
     return {
       p1: PHASE_BUILDERS[conf.phases[0]](profile.level, profile.constraints),
       p2: PHASE_BUILDERS[conf.phases[1]](profile.level, profile.constraints),
@@ -79,6 +99,73 @@ export function Program() {
     navigate('/');
   }
 
+  /* ===================================================================
+   * DÉMARRAGE D'UNE SÉANCE
+   * =================================================================== */
+
+  async function handleStartSession(
+    phase: 1 | 2,
+    weekNumber: number,
+    dayLetter: 'A' | 'B' | 'C',
+    day: Day
+  ) {
+    if (!user) return;
+
+    // Cas spécial : la session cliquée est celle qui est déjà in_progress → on y navigue direct
+    if (
+      inProgressSession &&
+      inProgressSession.week_number === weekNumber &&
+      inProgressSession.day_letter === dayLetter
+    ) {
+      navigate(`/session/${inProgressSession.id}`);
+      return;
+    }
+
+    const created = await startSession({
+      phase,
+      weekNumber,
+      dayLetter,
+      day,
+      onConflict: async (existing) => {
+        const choice = window.confirm(
+          `Tu as déjà une séance en cours : Jour ${existing.day_letter} (semaine ${existing.week_number}).\n\n` +
+          `OK = abandonner et démarrer la nouvelle\n` +
+          `Annuler = reprendre la séance en cours`
+        );
+        return choice ? 'abandon' : 'resume';
+      },
+    });
+
+    if (created) {
+      // Nouvelle session créée → on y navigue
+      navigate(`/session/${created.id}`);
+    } else if (inProgressSession) {
+      // L'utilisateur a choisi "resume" → navigation vers l'existante
+      navigate(`/session/${inProgressSession.id}`);
+    }
+  }
+
+  /* ===================================================================
+   * STATUT D'UN JOUR — fusion progression + verrouillage de semaines
+   * =================================================================== */
+
+  function getDayStatus(
+    weekNumber: number,
+    dayLetter: 'A' | 'B' | 'C'
+  ): DayProgressStatus {
+    // Semaines futures (au-delà de la semaine courante) = verrouillées
+    if (weekNumber > progress.currentWeek) return 'locked';
+
+    // Récupère l'état du jour depuis la progression calculée
+    const week = progress.weeks.find((w) => w.weekNumber === weekNumber);
+    if (!week) return 'not_started';
+    return week[`day${dayLetter}`] as DayProgressStatus;
+  }
+
+  /* ===================================================================
+   * RENDU CONDITIONNEL
+   * =================================================================== */
+
   if (loading) {
     return (
       <div className="shell">
@@ -96,17 +183,31 @@ export function Program() {
     return <Navigate to="/" replace />;
   }
 
+  /* ===================================================================
+   * CONSTRUCTION DES TABS
+   * =================================================================== */
+
   const pills = [
     `Objectif <strong>${objLabel}</strong>`,
     `Niveau <strong>${levelLabel}</strong>`,
     ...profile.constraints.map((c) => CONSTRAINT_LABELS[c] || c),
   ];
 
+  // Note : pour cette première version, on affiche les jours de la semaine COURANTE
+  // dans chaque phase. Plus tard on pourra avoir un sélecteur de semaine.
+  const currentWeek = progress.currentWeek;
+  const currentPhase = progress.currentPhase;
+
+  // Phase 1 affiche : si on est en phase 1, la current week. Sinon, la semaine 4 (dernière).
+  // Phase 2 affiche : si on est en phase 2, la current week. Sinon, la semaine 5 (première de la phase 2).
+  const displayedWeekP1 = currentPhase === 1 ? currentWeek : 4;
+  const displayedWeekP2 = currentPhase === 2 ? currentWeek : 5;
+
   const tabs = [
     {
       id: 'phase1',
       number: '01',
-      label: 'Phase 1',
+      label: `Phase 1 · Semaine ${displayedWeekP1}`,
       content: (
         <>
           <div className="phase-banner">
@@ -117,9 +218,20 @@ export function Program() {
             </div>
           </div>
           <div className="days">
-            {phases.p1.map((day) => (
-              <DayCard key={day.letter} day={day} onExerciseClick={setModalExercise} />
-            ))}
+            {phases.p1.map((day) => {
+              const dayLetter = day.letter as 'A' | 'B' | 'C';
+              const status = getDayStatus(displayedWeekP1, dayLetter);
+              return (
+                <DayCard
+                  key={day.letter}
+                  day={day}
+                  onExerciseClick={setModalExercise}
+                  status={status}
+                  weekNumber={displayedWeekP1}
+                  onStart={() => handleStartSession(1, displayedWeekP1, dayLetter, day)}
+                />
+              );
+            })}
           </div>
         </>
       ),
@@ -127,7 +239,7 @@ export function Program() {
     {
       id: 'phase2',
       number: '02',
-      label: 'Phase 2',
+      label: `Phase 2 · Semaine ${displayedWeekP2}`,
       content: (
         <>
           <div className="phase-banner p2">
@@ -138,9 +250,20 @@ export function Program() {
             </div>
           </div>
           <div className="days">
-            {phases.p2.map((day) => (
-              <DayCard key={day.letter} day={day} onExerciseClick={setModalExercise} />
-            ))}
+            {phases.p2.map((day) => {
+              const dayLetter = day.letter as 'A' | 'B' | 'C';
+              const status = getDayStatus(displayedWeekP2, dayLetter);
+              return (
+                <DayCard
+                  key={day.letter}
+                  day={day}
+                  onExerciseClick={setModalExercise}
+                  status={status}
+                  weekNumber={displayedWeekP2}
+                  onStart={() => handleStartSession(2, displayedWeekP2, dayLetter, day)}
+                />
+              );
+            })}
           </div>
         </>
       ),
@@ -222,20 +345,20 @@ export function Program() {
 
         <div className="stats">
           <div className="stat">
-            <div className="stat-val">8<small>SEM</small></div>
-            <div className="stat-label">Durée</div>
+            <div className="stat-val">{progress.currentWeek}<small>/8 SEM</small></div>
+            <div className="stat-label">Semaine</div>
           </div>
           <div className="stat">
-            <div className="stat-val">45<small>MIN</small></div>
-            <div className="stat-label">Par séance</div>
+            <div className="stat-val">{progress.globalPercent}<small>%</small></div>
+            <div className="stat-label">Complétion</div>
           </div>
           <div className="stat">
             <div className="stat-val">{conf.sessions}<small>×</small></div>
             <div className="stat-label">Séances / sem.</div>
           </div>
           <div className="stat">
-            <div className="stat-val">0<small>€</small></div>
-            <div className="stat-label">Matériel</div>
+            <div className="stat-val">45<small>MIN</small></div>
+            <div className="stat-label">Par séance</div>
           </div>
         </div>
       </header>
