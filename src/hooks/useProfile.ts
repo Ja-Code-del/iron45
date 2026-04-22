@@ -1,7 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { Profile } from '../types';
-
-const STORAGE_KEY = 'iron45_profile';
+import { useAuth } from '../context/AuthContext';
+import {
+  getActiveProgram,
+  createProgram,
+  archiveActiveProgram,
+} from '../features/program/programService';
 
 const EMPTY_PROFILE: Profile = {
   objective: null,
@@ -9,38 +13,76 @@ const EMPTY_PROFILE: Profile = {
   constraints: [],
 };
 
-function loadProfile(): Profile {
-  if (typeof window === 'undefined') return EMPTY_PROFILE;
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return EMPTY_PROFILE;
-    const parsed = JSON.parse(saved) as Profile;
-    if (parsed && parsed.objective && parsed.level) return parsed;
-    return EMPTY_PROFILE;
-  } catch {
-    return EMPTY_PROFILE;
-  }
-}
-
 export function useProfile() {
-  const [profile, setProfile] = useState<Profile>(loadProfile);
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
+  const [loading, setLoading] = useState(true);
+
+  // Charger le programme actif au montage / changement d'user
+  useEffect(() => {
+    if (!user) {
+      setProfile(EMPTY_PROFILE);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+
+    getActiveProgram(user.id).then((program) => {
+      if (cancelled) return;
+      if (program) {
+        setProfile({
+          objective: program.objective as Profile['objective'],
+          level: program.level as Profile['level'],
+          constraints: program.constraints as Profile['constraints'],
+        });
+      } else {
+        setProfile(EMPTY_PROFILE);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // Cleanup de l'ancienne clé localStorage (migration one-shot)
+  useEffect(() => {
+    try {
+      localStorage.removeItem('iron45_profile');
+    } catch {
+      // localStorage indisponible, on ignore
+    }
+  }, []);
 
   const isComplete = Boolean(profile.objective && profile.level);
 
-  useEffect(() => {
-    if (isComplete) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-    }
-  }, [profile, isComplete]);
+  const saveProfile = useCallback(
+    async (newProfile: Profile): Promise<boolean> => {
+      if (!user || !newProfile.objective || !newProfile.level) return false;
 
-  const saveProfile = useCallback((newProfile: Profile) => {
-    setProfile(newProfile);
-  }, []);
+      const program = await createProgram(user.id, {
+        objective: newProfile.objective,
+        level: newProfile.level,
+        constraints: newProfile.constraints,
+      });
 
-  const resetProfile = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+      if (program) {
+        setProfile(newProfile);
+        return true;
+      }
+      return false;
+    },
+    [user]
+  );
+
+  const resetProfile = useCallback(async () => {
+    if (!user) return;
+    await archiveActiveProgram(user.id);
     setProfile(EMPTY_PROFILE);
-  }, []);
+  }, [user]);
 
-  return { profile, isComplete, saveProfile, resetProfile };
+  return { profile, isComplete, loading, saveProfile, resetProfile };
 }
