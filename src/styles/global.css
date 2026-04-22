@@ -1697,3 +1697,72 @@ footer.manifesto {
   border-color: var(--line) !important;
   transform: none !important;
 }
+/* ================================================
+   HERO BANNER
+   ================================================ */
+.hero-banner {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-2);
+  margin-bottom: 40px;
+  border-radius: 2px;
+}
+
+.hero-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: contrast(1.05) saturate(0.92);
+  transition: filter 0.4s;
+}
+
+/* Overlay dégradé pour que la bannière se fonde avec le reste */
+.hero-banner-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--bg) 30%, transparent) 0%,
+      transparent 30%,
+      transparent 70%,
+      var(--bg) 100%
+    ),
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--bg) 20%, transparent) 0%,
+      transparent 20%,
+      transparent 80%,
+      color-mix(in srgb, var(--bg) 20%, transparent) 100%
+    );
+}
+
+/* Version pleine largeur (page program) */
+.hero-banner-full {
+  aspect-ratio: 16 / 6;
+  max-height: 480px;
+}
+
+/* Version compacte (page onboarding) */
+.hero-banner-compact {
+  aspect-ratio: 16 / 5;
+  max-height: 320px;
+}
+
+/* En mode light, on assombrit légèrement plus pour garder la lisibilité */
+:root[data-theme="light"] .hero-banner img {
+  filter: contrast(1.05) saturate(0.9) brightness(0.95);
+}
+
+/* Responsive : sur mobile, on réduit encore la hauteur */
+@media (max-width: 768px) {
+  .hero-banner-full {
+    aspect-ratio: 16 / 9;
+  }
+  .hero-banner-compact {
+    aspect-ratio: 16 / 7;
+  }
+}

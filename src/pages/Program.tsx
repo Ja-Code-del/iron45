@@ -10,6 +10,7 @@ import { PROFILE_CONFIG, buildPrinciples } from '../features/program/profileConf
 import { PHASE_BUILDERS } from '../features/program/builders';
 import { buildSchedule } from '../features/program/schedules';
 import { useAuth } from '../context/AuthContext';
+import { HeroBanner } from '../components/HeroBanner';
 import type { Exercise, Objective, Level, Day } from '../types';
 import type { Database } from '../types/database';
 
@@ -327,7 +328,7 @@ export function Program() {
   return (
     <div className="shell">
       <Navbar meta={`${objLabel} · ${levelLabel}`} showReset onReset={handleReset} />
-
+      <HeroBanner variant="full" />
       <header className="hero">
         <div className="hero-tag">
           <span>Programme personnalisé</span>
