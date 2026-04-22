@@ -8,7 +8,6 @@ interface DayCardProps {
   onExerciseClick: (exercise: Exercise) => void;
   status?: DayProgressStatus;
   onStart?: () => void;
-  dayLetter?: 'A' | 'B' | 'C';
   weekNumber?: number;
 }
 
@@ -17,7 +16,6 @@ export function DayCard({
   onExerciseClick,
   status = 'not_started',
   onStart,
-  dayLetter,
   weekNumber,
 }: DayCardProps) {
   const showStartButton = status === 'not_started' && onStart;
