@@ -38,7 +38,7 @@ function dayStatusFromSessions(
   // On cherche la session la plus récente pour ce (week, day) — peut y en avoir plusieurs (abandon + reprise)
   const relevant = sessions
     .filter((s) => s.week_number === weekNumber && s.day_letter === dayLetter)
-    .sort((a, b) => b.started_at.localeCompare(a.started_at));
+    .sort((a, b) => (b.started_at ?? '').localeCompare(a.started_at ?? ''));
 
   if (relevant.length === 0) return 'not_started';
 
