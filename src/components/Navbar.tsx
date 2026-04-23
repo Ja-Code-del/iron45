@@ -1,6 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
+import { Avatar } from './Avatar';
 import { useAuth } from '../context/AuthContext';
+import { useDisplayName } from '../hooks/useDisplayName';
 
 interface NavbarProps {
   meta?: string;
@@ -9,13 +11,9 @@ interface NavbarProps {
 }
 
 export function Navbar({ meta = 'Programme adaptatif', showReset = false, onReset }: NavbarProps) {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
+  const { displayName } = useDisplayName();
   const navigate = useNavigate();
-
-  async function handleSignOut() {
-    await signOut();
-    navigate('/auth');
-  }
 
   return (
     <nav className="top">
@@ -30,12 +28,14 @@ export function Navbar({ meta = 'Programme adaptatif', showReset = false, onRese
             Changer d'objectif
           </button>
         )}
-        {user && (
-          <button className="reset-btn" onClick={handleSignOut}>
-            Déconnexion
-          </button>
-        )}
         <ThemeToggle />
+        {user && (
+          <Avatar
+            name={displayName ?? 'Athlete'}
+            size="sm"
+            onClick={() => navigate('/glory')}
+          />
+        )}
       </div>
     </nav>
   );
