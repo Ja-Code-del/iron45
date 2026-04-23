@@ -10,12 +10,16 @@ interface UseDisplayNameReturn {
 }
 
 export function useDisplayName(): UseDisplayNameReturn {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [isSet, setIsSet] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function fetchProfile() {
+    // Tant que l'auth n'a pas fini, on reste en loading
+    if (authLoading) return;
+
+    // Auth résolue : si pas d'utilisateur, on est "ready" avec des valeurs vides
     if (!user) {
       setDisplayName(null);
       setIsSet(false);
@@ -23,6 +27,7 @@ export function useDisplayName(): UseDisplayNameReturn {
       return;
     }
 
+    // Utilisateur présent : on fetch
     setLoading(true);
     const { data } = await supabase
       .from('profiles')
@@ -40,7 +45,7 @@ export function useDisplayName(): UseDisplayNameReturn {
   useEffect(() => {
     fetchProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, authLoading]);
 
   return { displayName, isSet, loading, refresh: fetchProfile };
 }
