@@ -10,6 +10,7 @@ import { Welcome } from './pages/Welcome';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
 import { useTheme } from './hooks/useTheme';
+import { Glory } from './pages/Glory';
 import { Analytics } from "@vercel/analytics/react"
 import './styles/global.css';
 
@@ -54,6 +55,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Welcome />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/glory"
+              element={
+                <ProtectedRoute>
+                  <Glory />
                 </ProtectedRoute>
               }
             />
