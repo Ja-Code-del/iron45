@@ -17,7 +17,7 @@ export function Auth() {
   const [ironName, setIronName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [signupEmailSent, setSignupEmailSent] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -36,14 +36,9 @@ export function Auth() {
       if (error) {
         setError(error);
         setSubmitting(false);
-        return;
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/');
       } else {
-        setSignupSuccess(true);
+        setSignupEmailSent(true);
+        setSubmitting(false);
       }
     } else {
       const { error } = await signIn(email, password);
@@ -59,7 +54,6 @@ export function Auth() {
   function switchMode() {
     setMode(mode === 'signin' ? 'signup' : 'signin');
     setError(null);
-    setSignupSuccess(false);
   }
 
   async function handleGoogleSignIn() {
@@ -77,24 +71,32 @@ function handleAppleComingSoon() {
   setError("Sign in with Apple sera disponible bientôt.");
 }
 
-  if (signupSuccess) {
+  if (signupEmailSent) {
     return (
       <div className="shell">
-        <Navbar meta="Authentification" />
+        <Navbar meta="Inscription" />
         <section className="onboarding">
           <div className="onboarding-inner">
             <div className="onb-tag">Inscription réussie</div>
             <h2 className="onb-title">
-              Un <span className="italic">email</span><br />t'attend.
+              Vérifie<br />tes <span className="italic">mails</span>.
             </h2>
             <p className="onb-sub">
-              Clique sur le lien de confirmation qu'on vient d'envoyer à <em>{email}</em> pour activer ton compte.
+              On t'a envoyé un lien de confirmation à <em>{email}</em>.
+              Clique dessus pour activer ton compte et commencer ton programme.
             </p>
-            <div className="auth-success" style={{ marginTop: '24px', maxWidth: '520px' }}>
-              Pense à vérifier tes spams si tu ne vois rien dans quelques minutes.
+            <div className="auth-success" style={{ marginTop: '24px' }}>
+              Pense à vérifier tes spams si tu ne vois rien dans 2-3 minutes.
+              Le lien expire après 24 heures.
             </div>
-            <div className="onb-nav" style={{ marginTop: '32px' }}>
-              <button className="onb-btn onb-btn-back" onClick={() => { setSignupSuccess(false); setMode('signin'); }}>
+            <div style={{ marginTop: '32px' }}>
+              <button
+                className="onb-btn onb-btn-back"
+                onClick={() => {
+                  setSignupEmailSent(false);
+                  setMode('signin');
+                }}
+              >
                 ← Retour à la connexion
               </button>
             </div>
